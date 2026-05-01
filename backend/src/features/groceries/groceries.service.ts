@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Grocery } from './entities/grocery.entity';
@@ -13,32 +13,42 @@ export class GroceriesService {
     private readonly groceryRepository: Repository<Grocery>,
   ) {}
 
-  async findAll(): Promise<Grocery[]> {
-    // TODO: implement
-    return [];
+  findAll(): Promise<Grocery[]> {
+    return this.groceryRepository.find({ order: { createdAt: 'DESC' } });
   }
 
-  async findOne(_id: number): Promise<Grocery | null> {
-    // TODO: implement
-    return null;
+  async findOne(id: number): Promise<Grocery> {
+    const grocery = await this.groceryRepository.findOne({ where: { id } });
+    if (!grocery) throw new NotFoundException(`Grocery #${id} not found`);
+    return grocery;
   }
 
-  async create(_createGroceryDto: CreateGroceryDto): Promise<Grocery> {
-    // TODO: implement
-    return null;
+  create(createGroceryDto: CreateGroceryDto): Promise<Grocery> {
+    const grocery = this.groceryRepository.create({
+      ...createGroceryDto,
+      isAvailable: createGroceryDto.inventory > 0,
+    });
+    return this.groceryRepository.save(grocery);
   }
 
-  async update(_id: number, _updateGroceryDto: UpdateGroceryDto): Promise<Grocery> {
-    // TODO: implement
-    return null;
+  async update(id: number, updateGroceryDto: UpdateGroceryDto): Promise<Grocery> {
+    const grocery = await this.findOne(id);
+    Object.assign(grocery, updateGroceryDto);
+    if (updateGroceryDto.inventory !== undefined) {
+      grocery.isAvailable = updateGroceryDto.inventory > 0;
+    }
+    return this.groceryRepository.save(grocery);
   }
 
-  async remove(_id: number): Promise<void> {
-    // TODO: implement
+  async remove(id: number): Promise<void> {
+    const grocery = await this.findOne(id);
+    await this.groceryRepository.remove(grocery);
   }
 
-  async updateInventory(_id: number, _updateInventoryDto: UpdateInventoryDto): Promise<Grocery> {
-    // TODO: implement
-    return null;
+  async updateInventory(id: number, dto: UpdateInventoryDto): Promise<Grocery> {
+    const grocery = await this.findOne(id);
+    grocery.inventory = dto.inventory;
+    grocery.isAvailable = dto.inventory > 0;
+    return this.groceryRepository.save(grocery);
   }
 }
