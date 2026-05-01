@@ -11,4 +11,5 @@ export default () => ({
     secret: process.env.JWT_SECRET || 'change-me-in-production',
     expiresIn: process.env.JWT_EXPIRES_IN || '1d',
   },
+  adminSecret: process.env.ADMIN_SECRET || '',
 });
