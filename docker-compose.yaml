@@ -15,9 +15,6 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-    volumes:
-      - ./backend/src:/app/src
-    command: npm run start:dev
     restart: unless-stopped
 
   postgres:
